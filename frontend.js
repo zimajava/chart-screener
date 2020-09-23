@@ -1,16 +1,14 @@
 
 $(function () {
-  "use strict";
-
   // for better performance - to avoid searching in DOM
   var content = $('#content');
   var input = $('#input');
   var status = $('#status');
 
   // my color assigned by the server
-  var myColor = false;
+  var myColor = '';
   // my name sent to the server
-  var myName = false;
+  var myName = '';
 
   // if user is running mozilla then use it's built-in WebSocket
   window.WebSocket = window.WebSocket || window.MozWebSocket;
@@ -25,7 +23,7 @@ $(function () {
   }
 
   // open connection
-  var connection = new WebSocket('ws://zi-node-chat.herokuapp.com:1337');
+  var connection = new WebSocket('wss://zi-node-chat.herokuapp.com');
 
   connection.onopen = function () {
     // first we want users to enter their names
@@ -61,13 +59,11 @@ $(function () {
     } else if (json.type === 'history') { // entire message history
       // insert every single message to the chat window
       for (var i=0; i < json.data.length; i++) {
-        addMessage(json.data[i].author, json.data[i].text,
-          json.data[i].color, new Date(json.data[i].time));
+        addMessage(json.data[i].author, json.data[i].text, json.data[i].color, new Date(json.data[i].time));
       }
     } else if (json.type === 'message') { // it's a single message
       input.removeAttr('disabled'); // let the user write another message
-      addMessage(json.data.author, json.data.text,
-        json.data.color, new Date(json.data.time));
+      addMessage(json.data.author, json.data.text, json.data.color, new Date(json.data.time));
     } else {
       console.log('Hmm..., I\'ve never seen JSON like this: ', json);
     }
@@ -90,7 +86,7 @@ $(function () {
       input.attr('disabled', 'disabled');
 
       // we know that the first message sent from a user their name
-      if (myName === false) {
+      if (!myName) {
         myName = msg;
       }
     }
@@ -119,3 +115,7 @@ $(function () {
       + ': ' + message + '</p>');
   }
 });
+
+
+
+console.log("test")
