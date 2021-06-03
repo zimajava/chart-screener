@@ -2,7 +2,7 @@
   "name": "screenshot",
   "version": "1.0.0",
   "description": "Screenshot as a service",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
     "test": "npm run-script run-tests",
     "build": "node_modules/.bin/tsc",
