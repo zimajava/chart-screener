@@ -65,7 +65,11 @@ app.get('/png', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             headless: true,
             // defaultViewport: {width: 1920, height: 1080},
             waitForInitialPage: true,
-            devtools: false
+            devtools: false,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+            ],
         });
         yield setDomainLocalStorage(browser, url, localStorageValues, cookiesValues);
         const page = yield browser.newPage();

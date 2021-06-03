@@ -73,7 +73,11 @@ app.get('/png', async (req: Request, res: Response) => {
             headless: true,
             // defaultViewport: {width: 1920, height: 1080},
             waitForInitialPage: true,
-            devtools: false
+            devtools: false,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+            ],
         });
 
         await setDomainLocalStorage(browser, url, localStorageValues, cookiesValues);
