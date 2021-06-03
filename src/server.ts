@@ -80,6 +80,7 @@ app.get('/png', async (req: Request, res: Response) => {
             ],
         });
 
+        
         await setDomainLocalStorage(browser, url, localStorageValues, cookiesValues);
 
         const page = await browser.newPage();
