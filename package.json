@@ -6,7 +6,8 @@
   "scripts": {
     "test": "npm run-script run-tests",
     "build": "node_modules/.bin/tsc",
-    "dev": "npm run-script build && node dist/server.js"
+    "dev": "npm run-script build && node dist/server.js",
+    "start": "node index.js"
   },
   "author": "Zima Maksim",
   "license": "ISC",
