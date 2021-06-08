@@ -1,0 +1,85 @@
+image: docker:20.10.0
+
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay
+  ENV_FILE: ".env"
+  DOCKER_BUILDKIT: 1
+  BUILDKIT_PROGRESS: plain
+
+stages:
+  - build
+  - push
+  - deploy
+
+include: '/deploy-swarm.yml'
+
+build_full:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: always
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  stage: build
+  before_script:
+    - apk add --update curl && rm -rf /var/cache/apk/*
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build --no-cache -f Dockerfile -t $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA
+
+build_dev:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+      when: manual
+  stage: build
+  before_script:
+    - apk add --update curl && rm -rf /var/cache/apk/*
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build --no-cache -f Dockerfile -t $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA
+
+push_latest:
+  stage: push
+  only:
+    - master
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/app:latest
+    - docker push $CI_REGISTRY_IMAGE/app:latest
+
+push_tag:
+  stage: push
+  only:
+    - tags
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE/app:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE/app:$CI_COMMIT_REF_NAME
+    - docker push $CI_REGISTRY_IMAGE/app:$CI_COMMIT_REF_NAME
+
+deploy_sm_prod:
+  environment: sm_prod
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+.\d+.\d+/'
+      when: manual
+  stage: deploy
+  variables:
+    DEPLOY_TAG: $CI_COMMIT_TAG
+    STACK_NAME: chart-screener
+    STACK_FILE: docker-stack.yml
+    TRAEFIK_HOST: smartbotpress.xcritical.com
+    TRAEFIK_PATH: /nlu-labs/chart-screener
+    SSH_KEY: $SSH_KEY_SMARTBOT
+    SSH_HOST: $SSH_SMARTBOT
+    ENV_BP: $ENV_SMARTBOT
+  before_script:
+    - !reference [ .deploy-swarm, before_script ]
+  script:
+    - !reference [ .deploy-swarm, script ]

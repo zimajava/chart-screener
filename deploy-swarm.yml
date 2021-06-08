@@ -1,0 +1,13 @@
+.deploy-swarm:
+  before_script:
+    - apk add --update python py-pip python-dev git openssh-client && pip install docker-compose
+    - eval $(ssh-agent -s)
+    - echo "$SSH_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking accept-new\n\n" > ~/.ssh/config
+  script:
+    - echo "$ENV_BP" > $ENV_FILE
+    - docker context create deployContext --docker "host=ssh://${SSH_HOST}"
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker --context deployContext stack deploy --with-registry-auth -c $STACK_FILE $STACK_NAME
