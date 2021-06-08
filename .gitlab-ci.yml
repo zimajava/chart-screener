@@ -76,8 +76,8 @@ deploy_sm_prod:
     STACK_FILE: docker-stack.yml
     TRAEFIK_HOST: smartbotpress.xcritical.com
     TRAEFIK_PATH: /nlu-labs/chart-screener
-    SSH_KEY: $SSH_KEY_SMARTBOT
-    SSH_HOST: $SSH_SMARTBOT
+    SSH_KEY: $SSH_KEY_SM_PROD
+    SSH_HOST: $SSH_SM_PROD
     ENV_BP: $ENV_SMARTBOT
   before_script:
     - !reference [ .deploy-swarm, before_script ]
