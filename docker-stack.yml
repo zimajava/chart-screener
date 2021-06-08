@@ -18,5 +18,7 @@ services:
         traefik.http.routers.chart-screener.entrypoints: websecure
         traefik.http.routers.chart-screener.tls: "true"
         traefik.http.routers.chart-screener.tls.certresolver: letsencrypt
+        traefik.http.routers.chart-screener.middlewares: stripper-chart
+        traefik.http.middlewares.stripper-chart.stripprefix.prefixes: /nlu-labs/chart-screener
     networks:
       - proxy
