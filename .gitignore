@@ -92,3 +92,7 @@ typings/
 .dynamodb/
 
 dist
+public
+build
+
+.DS_Store

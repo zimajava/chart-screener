@@ -1,6 +1,6 @@
 
 import { Browser, Page, ScreenshotOptions, Viewport, PDFOptions } from 'puppeteer'
-import * as sleep from 'sleep-promise'
+import sleep from 'sleep-promise'
 
 export default class BrowserProxy {
     readonly _browsers: Promise<Browser>[]

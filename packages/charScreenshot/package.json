@@ -1,0 +1,50 @@
+{
+  "name": "@screener/server",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "scripts": {
+    "postinstall": "yarn build",
+    "build": "tsc",
+    "build:start": "tsc && node index.js",
+    "dev": "nodemon src/server.ts",
+    "dev:debug": "nodemon --inspect src/server.ts"
+  },
+  "dependencies": {
+    "@screener/webpack-config": "1.0.0",
+    "axios": "0.21.1",
+    "express": "4.17.1",
+    "express-rate-limit": "5.2.6",
+    "nodemon": "2.0.7",
+    "puppeteer": "10.0.0",
+    "puppeteer-request-spy": "1.4.0",
+    "sleep-promise": "9.1.0",
+    "ts-node": "10.0.0",
+    "typescript": "4.3.2",
+    "array-differ": "3.0.0",
+    "chalk": "4.1.1",
+    "date-fns": "2.22.1",
+    "filenamify": "4.3.0",
+    "filenamify-url": "2.1.1",
+    "get-res": "3.0.0",
+    "lodash.template": "4.5.0",
+    "make-dir": "3.1.0",
+    "p-memoize": "4.0.1",
+    "plur": "4.0.0",
+    "tough-cookie": "4.0.0",
+    "unused-filename": "3.0.0",
+    "viewport-list": "5.1.1",
+    "cors": "2.8.5",
+    "ws": "7.4.6",
+    "bufferutil": "4.0.3",
+    "utf-8-validate": "5.0.5",
+    "cross-env": "7.0.3"
+  },
+  "devDependencies": {
+    "@types/express": "4.17.12",
+    "@types/node": "15.12.0",
+    "@types/puppeteer": "5.4.3",
+    "@types/cors": "2.8.10"
+  },
+  "author": "Zima Maksim",
+  "license": "ISC"
+}

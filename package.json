@@ -1,30 +1,18 @@
 {
-  "name": "screenshot",
+  "name": "screener",
   "version": "1.0.0",
-  "description": "Screenshot as a service",
-  "main": "dist/server.js",
   "scripts": {
-    "test": "npm run-script run-tests",
-    "build": "node_modules/.bin/tsc",
-    "dev": "npm run-script build && node dist/server.js",
-    "start": "node index.js"
+    "start": "cross-env NODE_ENV=production node index.js"
   },
+  "dependencies": {
+    "lerna": "4.0.0",
+    "rimraf": "3.0.2",
+    "cross-env": "7.0.3"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
   "author": "Zima Maksim",
   "license": "ISC",
-  "dependencies": {
-    "@types/express": "4.17.12",
-    "@types/node": "15.12.0",
-    "@types/puppeteer": "5.4.3",
-    "awesome-typescript-loader": "5.2.1",
-    "express": "4.17.1",
-    "express-rate-limit": "5.2.6",
-    "sleep-promise": "9.1.0",
-    "typescript": "4.3.2",
-    "axios": "0.21.1",
-    "nodemon": "2.0.7",
-    "puppeteer": "10.0.0"
-  },
-  "devDependencies": {
-    "ts-node": "10.0.0"
-  }
+  "private": true
 }
