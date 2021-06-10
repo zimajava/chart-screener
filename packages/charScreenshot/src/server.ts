@@ -90,17 +90,26 @@ app.post('/auth', async (req: Request, res: Response) => {
     }
 })
 
-app.get('/', async (req: Request, res: Response) => {
+app.get('/:tid/:assetName/:timeframe', async (req: Request, res: Response) => {
+    const { tid, assetName, timeframe } = req.params
+
     try {
         const resolve = (p: string) => path.resolve(process.cwd(), p)
 
         const tchJsPath = isProd ? resolve('technicalChart/TechChartLib.js') : resolve('../../technicalChart/TechChartLib.js')
-        // const initJsPath = isProd ? resolve('dist/init.js') : resolve('src/init.js')
         const tchCssPath = isProd ? resolve('technicalChart/TechChartLib.css') : resolve('../../technicalChart/TechChartLib.css')
+        const settingsPath = isProd ? resolve('data/settings.json') : resolve('../../data/settings.json')
+
+        const settings = fs.readFileSync(settingsPath, { encoding: 'utf8' })
+
+        const pair = JSON.parse(settings)[assetName]
+
+        console.log('tid =>', tid, '| pair =>', JSON.stringify(pair), '| timeframe =>', timeframe)
+
+        const html = `data:text/html,<div id="container" class="container"></div><div id="pair">${JSON.stringify(pair)}</div><div id="timeframe">${timeframe}</div>`
 
         const pictureArr = await new PageRes({delay: 1})
-            .src(
-                'data:text/html,<div id="container" class="container"></div>',
+            .src(html.toString(),
                 ['800x600'],
                 {
                     script: [tchJsPath],
@@ -116,7 +125,7 @@ app.get('/', async (req: Request, res: Response) => {
                         ]
                     },
                     selector: '.tch-charts-container',
-                    remove: ['.tch-spinner-container']
+                    remove: ['.tch-spinner-container'],
                 }
             )
             .run();
@@ -209,7 +218,7 @@ app.get('/png', async (req: Request, res: Response) => {
     const cookiesValues = [
         {
             "name": "platformParams",
-            "value": platformParamValue,
+            "value": platformParamValue.toString(),
             "domain": ".umarkets.ai",
             "path": "/",
             "httpOnly": false,
