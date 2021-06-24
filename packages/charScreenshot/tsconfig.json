@@ -6,19 +6,28 @@
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "allowJs": true,
-    "lib": [
-      "ESNext",
-      "dom"
-    ],
-    "strictNullChecks": true,
+    "lib": ["es6", "es2015", "dom"],
+//    "strictNullChecks": true,
     "moduleResolution": "node",
     "sourceMap": true,
     "skipLibCheck": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+
+
+//    "strict": true,
+    "strictNullChecks": false,
+//    "inlineSources": true,
+//    "declaration": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "importHelpers": true,
+//    "module": "esnext",
+//    "target": "es5",
+    "rootDir": "src"
   },
   "include": [
     "src/**/*"

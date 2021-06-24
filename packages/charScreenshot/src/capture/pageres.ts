@@ -1,8 +1,8 @@
 import {promisify} from 'util';
 import {parse as parseUrl} from 'url';
 import path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
+import fs from 'fs';
+import os from 'os';
 import {EventEmitter} from 'events';
 import pMemoize from 'p-memoize';
 import filenamify from 'filenamify';
@@ -198,7 +198,7 @@ interface Stats {
 export type Screenshot = Buffer & { filename: string };
 
 const getResolutionsMemoized = pMemoize(getResolutions);
-
+// @ts-ignore
 const viewportListMemoized = pMemoize(viewportList);
 
 // TODO: Use private class fields when targeting Node.js 12.
