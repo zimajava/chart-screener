@@ -20,7 +20,9 @@ async function bootstrap() {
   await app.register(fastifyMulipart);
   app.enableCors();
 
-  await app.listen(3050);
+  await app.listen(3050, '0.0.0.0', () => {
+    console.log(`Server listening at http://0.0.0.0:${3050}`);
+  });
 }
 
 bootstrap().then((r) => console.log(r));
