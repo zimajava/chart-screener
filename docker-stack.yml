@@ -13,12 +13,12 @@ services:
         condition: any
         delay: 5s
       labels:
-        traefik.http.routers.chart-screener.rule:  (Host(`${TRAEFIK_HOST}`) && PathPrefix(`${TRAEFIK_PATH}`))
-        traefik.http.services.chart-screener.loadbalancer.server.port: 3050
-        traefik.http.routers.chart-screener.entrypoints: websecure
-        traefik.http.routers.chart-screener.tls: "true"
-        traefik.http.routers.chart-screener.tls.certresolver: letsencrypt
-        traefik.http.routers.chart-screener.middlewares: stripper-chart
-        traefik.http.middlewares.stripper-chart.stripprefix.prefixes: /nlu-labs/chart-screener
+        - "traefik.http.routers.${STACK_NAME}.rule=(Host(`${TRAEFIK_HOST}`) && PathPrefix(`${TRAEFIK_PATH}`))"
+        - "traefik.http.services.${STACK_NAME}.loadbalancer.server.port=3050"
+        - "traefik.http.middlewares.strip-${STACK_NAME}.stripprefix.prefixes=${TRAEFIK_PATH}"
+        - "traefik.http.routers.${STACK_NAME}.middlewares=strip-${STACK_NAME}"
+        - "traefik.http.routers.${STACK_NAME}.entrypoints=websecure"
+        - "traefik.http.routers.${STACK_NAME}.tls=true"
+        - "traefik.http.routers.${STACK_NAME}.tls.certresolver=letsencrypt"
     networks:
       - proxy

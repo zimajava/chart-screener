@@ -11,3 +11,5 @@
     - docker context create deployContext --docker "host=ssh://${SSH_HOST}"
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker --context deployContext stack deploy --with-registry-auth -c $STACK_FILE $STACK_NAME
+    - echo 'waiting for deploy to finish'
+    - docker --context deployContext run --rm -i -v /var/run/docker.sock:/var/run/docker.sock sudobmitch/docker-stack-wait -t 300 $STACK_NAME

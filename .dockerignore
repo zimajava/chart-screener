@@ -4,3 +4,7 @@
 .gitlab-ci.yml
 README.md
 Procfile
+
+
+dist
+node_modules

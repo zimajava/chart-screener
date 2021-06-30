@@ -1,9 +1,11 @@
-FROM zenika/alpine-chrome:89-with-puppeteer
-USER root
+FROM node:14.16.0-alpine
+
 WORKDIR /screener
-RUN apk update && apk --no-cache add git yarn g++ make
-COPY ../. .
+RUN apk update && apk --no-cache add yarn imagemagick-dev imagemagick librsvg-dev
+
+COPY . .
+
 RUN yarn
 
 EXPOSE 3050
-CMD yarn start
+CMD yarn start:prod
