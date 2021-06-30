@@ -22,3 +22,5 @@ services:
         - "traefik.http.routers.${STACK_NAME}.tls.certresolver=letsencrypt"
     networks:
       - proxy
+    env_file:
+      - ${ENV_FILE}
