@@ -10,6 +10,8 @@ import axios from 'axios';
 
 // @ts-ignore
 import { AnychartExportWrapper } from './anychart-node';
+// import { darkTurquoiseTheme } from './dark-turquoise-theme';
+import { darkBlueTheme } from './dark-blue-theme';
 
 type Request = FastifyRequest;
 type Response = FastifyReply;
@@ -73,7 +75,22 @@ export class AppService {
       runScripts: 'dangerously',
     });
 
-    const anychart = an(jsdom.window);
+    const window = jsdom.window;
+    const doc = window.document;
+
+    const mainCss = fs.readFileSync(
+      path.resolve(process.cwd(), 'css/anychart-ui.css'),
+      'utf8',
+    );
+    const head = doc.getElementsByTagName('head')[0];
+    const style = doc.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = mainCss;
+    head.appendChild(style);
+
+    // darkTurquoiseTheme(window);
+    const anychart = an(window);
+    darkBlueTheme(window);
     const anychartExport = AnychartExportWrapper(anychart);
 
     const pair = settings[assetName];
@@ -93,49 +110,81 @@ export class AppService {
       console.error(e);
     }
 
-    // create data table on loaded data
-    const dataTable = anychart.data.table('T');
-    dataTable.addData(rawData);
-
-    // map the data
-    const mapping = dataTable.mapAs({
-      open: 'O',
-      high: 'H',
-      low: 'L',
-      close: 'C',
+    const data = rawData.map(({ T, O, H, C, L }) => {
+      const time = T * 1000;
+      return [time, O, H, L, C];
     });
+
+    // apply coffee theme
+    // anychart.theme(window.anychart.themes.darkTurquoise);
+    // anychart.theme(window.anychart.themes.darkBlue);
+
+    // create data table on loaded data
+    const dataTable = anychart.data.table();
+    dataTable.addData(data);
+
+    const mapping = dataTable.mapAs();
+    mapping.addField('open', 1, 'first');
+    mapping.addField('high', 2, 'max');
+    mapping.addField('low', 3, 'min');
+    mapping.addField('close', 4, 'last');
+    mapping.addField('value', 4, 'last');
 
     // create stock chart
     const chart = anychart.stock();
+    chart.padding(20, 70, 20, 20);
+
+    const grouping = chart.grouping();
+    // Set maximum visible points count.
+    grouping.maxVisiblePoints(80);
+    chart.scrollerGrouping({ maxVisiblePoints: 80 });
+
+    // const dateTimeScale = anychart.scales.dateTime();
+    // const ticks = dateTimeScale.ticks();
+    // // Set interval for ticks.
+    // ticks.interval('day', 5);
+    // chart.xScale(dateTimeScale);
+
+    // const scale = chart.xScale();
+    // // // Set minimum gap
+    // scale.minimumGap({ intervalsCount: 20, unitType: 'minute', unitCount: 1 });
+    // // // Set maximum gap
+    // scale.maximumGap({ intervalsCount: 15, unitType: 'minute', unitCount: 1 });
+    // // Set ticks.
+    // scale.ticks([{ minor: 'minute', major: 'minute' }]);
 
     // create first plot on the chart
     const plot = chart.plot(0);
     // set grid settings
-    plot.yGrid(true).xGrid(true).yMinorGrid(true).xMinorGrid(true);
+    plot.yGrid(true).xGrid(true);
+    plot.yAxis(0).orientation('right');
 
-    // set the series
+    const indicator = plot.priceIndicator();
+    indicator.value('last-visible');
+    indicator.fallingStroke('#F44336');
+    indicator.fallingLabel({ background: '#F44336' });
+    indicator.risingStroke('#4CAF50');
+    indicator.risingLabel({ background: '#4CAF50' });
+
     const series = plot.candlestick(mapping);
 
-    series.risingStroke('#336666');
-    series.risingFill('#339999');
-    series.fallingStroke('#660000');
-    series.fallingFill('#990033');
-    // series.pointWidth(10);
+    series.risingStroke('#4CAF50');
+    series.risingFill('#4CAF50');
+    series.fallingStroke('#F44336');
+    series.fallingFill('#F44336');
 
-    chart.scroller().enabled(false);
+    // chart.selectRange(data[0][0], data[79][0]);
+    const scroller = chart.scroller();
+    scroller.line(mapping);
 
-    // series.name("ACME Corp. stock prices");
-    // chart.title('Stock Candlestick Demo: ACME Corp. Stock prices');
-    chart.bounds(0, 0, 800, 600);
+    chart.bounds(0, 0, 1024, 768);
     chart.container('container');
     chart.draw();
 
     try {
-      // generate JPG image and save it to a file
-      const picture = await anychartExport.exportTo(chart, 'jpg');
-
+      const picture = await anychartExport.exportTo(chart, 'png');
       response.status(200);
-      response.headers({ 'Content-type': 'image/jpg' });
+      response.headers({ 'Content-type': 'image/png' });
       response.send(picture);
     } catch (e) {
       console.error(e);

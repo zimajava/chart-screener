@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable @typescript-eslint/no-var-requires,@typescript-eslint/ban-ts-comment */
 import * as fs from 'fs';
 import * as path from 'path';
 import { isObject } from 'util';
@@ -10,22 +10,28 @@ import request from 'request';
 import { loopWhile } from 'deasync';
 import vm from 'vm2';
 import { subClass } from 'gm';
-import opentype from 'opentype.js';
+import * as opentype from 'opentype.js';
 import async from 'async';
 import { v4 as uuidv4 } from 'uuid';
 import { JSDOM } from 'jsdom';
+// @ts-ignore
+import * as chart from 'anychart';
 
 function extend(origin, add) {
   // Don't do anything if add isn't an object
-  if (!add || !isObject(add)) return origin;
+  if (!add || !isObject(add)) {
+    return origin;
+  }
 
   const keys = Object.keys(add);
   let i = keys.length;
   while (i--) {
     origin[keys[i]] = add[keys[i]];
   }
+
   return origin;
 }
+
 const gm = subClass({ imageMagick: true });
 const xmlNs = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>';
 const XMLparser = new DOMParser();
@@ -58,7 +64,8 @@ childProcess.on('error', function (err) {
     );
   }
 });
-childProcess.stdin.on('error', function (err) {});
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+childProcess.stdin.on('error', (err) => {});
 childProcess.stdin.write('');
 childProcess.stdin.end();
 
@@ -71,26 +78,19 @@ childProcess.on('error', function (err) {
     );
   }
 });
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 childProcess.stdin.on('error', function (err) {});
 childProcess.stdin.write('');
 childProcess.stdin.end();
+
+loadDefaultFontsSync();
 
 // ///////////////////////////////
 
 let iframeDoc = null;
 let rootDoc = null;
 const iframes = {};
-// // @ts-ignore
-// let anychart = typeof anychart === 'undefined' ? anychart : void 0;
-//
-// if (anychart) {
-//     const doc = anychart.global() && anychart.global().document || createDocument();
-//     setAsRootDocument(doc);
-// } else {
-setAsRootDocument(createDocument());
-// @ts-ignore
-let anychart = require('anychart')(rootDoc.defaultView);
-// }
+let anychart = chart(setAsRootDocument(createDocument()).defaultView);
 
 //region --- Utils and settings
 function setAsRootDocument(doc) {
@@ -105,7 +105,7 @@ function setAsRootDocument(doc) {
 }
 
 function createDocument() {
-  return new JSDOM('', { runScripts: 'dangerously' }).window.document;
+  return new JSDOM('<body></body>', { runScripts: 'dangerously' }).window.document;
 }
 
 function createSandbox(containerTd) {
@@ -222,7 +222,9 @@ function getBBox() {
       (fontWeight == 'normal' || !isNaN(+fontWeight) ? '' : ' ' + fontWeight) +
       (fontStyle == 'normal' ? '' : ' ' + fontStyle);
 
-    if ((font = fonts[name])) {
+    const check = (font = fonts[name]);
+
+    if (check) {
       break;
     }
   }
@@ -914,7 +916,5 @@ AnychartExportWrapper.loadFontSync = AnychartExport.prototype.loadFontSync;
 AnychartExportWrapper.anychartify = AnychartExport.prototype.anychartify;
 
 //endregion
-
-loadDefaultFontsSync();
 
 export { AnychartExportWrapper };

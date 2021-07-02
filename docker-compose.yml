@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  chat-screener:
+    container_name: chat_screener
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      # image: node:14.16.0-alpine
+      # working_dir: /screener
+      # volumes: 
+      #   - .:/screener
+      # command: yarn start:dev
+    ports:
+      - 3050:3050
+    restart: unless-stopped
