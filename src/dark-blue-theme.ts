@@ -23,11 +23,7 @@ export function darkBlueTheme(win) {
     },
     defaultOrdinalColorScale: {
       autoColors: function (c) {
-        return win.anychart.color.blendedHueProgression(
-          '#40c4ff',
-          '#0179be',
-          c,
-        );
+        return win.anychart.color.blendedHueProgression('#40c4ff', '#0179be', c);
       },
     },
     defaultLinearColorScale: { colors: ['#40c4ff', '#0179be'] },

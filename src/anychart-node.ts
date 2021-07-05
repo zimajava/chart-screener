@@ -73,9 +73,7 @@ childProcess = spawn('rsvg-convert');
 childProcess.on('error', function (err) {
   // @ts-ignore
   if (err.code === 'ENOENT') {
-    console.warn(
-      'Warning! Please install rsvglib utility. (https://github.com/AnyChart/AnyChart-NodeJS)',
-    );
+    console.warn('Warning! Please install rsvglib utility. (https://github.com/AnyChart/AnyChart-NodeJS)');
   }
 });
 // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -163,13 +161,7 @@ function applyImageParams(img, params) {
   for (let i = 0, len = vectorImageParams.length; i < len; i++) {
     const paramName = vectorImageParams[i];
     const value = params[paramName];
-    if (value)
-      img[paramName].apply(
-        img,
-        Object.prototype.toString.call(value) === '[object Array]'
-          ? value
-          : [value],
-      );
+    if (value) img[paramName].apply(img, Object.prototype.toString.call(value) === '[object Array]' ? value : [value]);
   }
 }
 
@@ -238,25 +230,15 @@ function getBBox() {
   const height = Math.abs(top) + Math.abs(font.descender * scale);
   let width = 0;
 
-  font.forEachGlyph(
-    text,
-    0,
-    0,
-    fontSize,
-    undefined,
-    function (glyph, x, y, fontSize, options) {
-      const metrics = glyph.getMetrics();
-      metrics.xMin *= scale;
-      metrics.xMax *= scale;
-      metrics.leftSideBearing *= scale;
-      metrics.rightSideBearing *= scale;
+  font.forEachGlyph(text, 0, 0, fontSize, undefined, function (glyph, x, y, fontSize, options) {
+    const metrics = glyph.getMetrics();
+    metrics.xMin *= scale;
+    metrics.xMax *= scale;
+    metrics.leftSideBearing *= scale;
+    metrics.rightSideBearing *= scale;
 
-      width +=
-        Math.abs(metrics.xMax - metrics.xMin) +
-        metrics.leftSideBearing +
-        metrics.rightSideBearing;
-    },
-  );
+    width += Math.abs(metrics.xMax - metrics.xMin) + metrics.leftSideBearing + metrics.rightSideBearing;
+  });
 
   return { x: 0, y: top, width: width, height: height };
 }
@@ -286,14 +268,7 @@ function getParams(args) {
   const lastArg = args[arrLength - 1];
   const callback = isFunction(lastArg) ? lastArg : null;
 
-  const options =
-    arrLength === 1
-      ? void 0
-      : callback
-      ? arrLength > 2
-        ? args[arrLength - 2]
-        : void 0
-      : lastArg;
+  const options = arrLength === 1 ? void 0 : callback ? (arrLength > 2 ? args[arrLength - 2] : void 0) : lastArg;
   const params = {
     callback: undefined,
     outputType: undefined,
@@ -561,9 +536,7 @@ function getSvg(target, params, callback) {
               anychart.global(params.document.defaultView);
               target = anychart.fromJson(target.toJson());
             } else {
-              console.warn(
-                "Warning! Cannot find context of executing. Please define 'document' in exporting params.",
-              );
+              console.warn("Warning! Cannot find context of executing. Please define 'document' in exporting params.");
               return callback(null, '', params);
             }
             target.container(params.containerId);
@@ -584,9 +557,7 @@ function getSvg(target, params, callback) {
             height = bounds.height;
           }
 
-          svgElement = isChart
-            ? container.getStage().domElement()
-            : target.domElement();
+          svgElement = isChart ? container.getStage().domElement() : target.domElement();
           svg = getSvgString(svgElement, width, height);
 
           if (dataType === 'json' && dataType === 'xml') {
@@ -606,10 +577,7 @@ function getSvg(target, params, callback) {
 
 function getAvailableProcessesCount() {
   //nix way
-  const procMetrics = execSync('ulimit -u && ps ax | wc -l')
-    .toString()
-    .trim()
-    .split(/\n\s+/g);
+  const procMetrics = execSync('ulimit -u && ps ax | wc -l').toString().trim().split(/\n\s+/g);
   // @ts-ignore
   return procMetrics[0] - procMetrics[1];
 }
@@ -627,10 +595,7 @@ function workerForConverting(task, done) {
       if (isDef(task.params.height)) {
         params.push('-h', task.params.height);
       }
-      if (
-        isDef(task.params['aspect-ratio']) &&
-        String(task.params['aspect-ratio']).toLowerCase() != 'false'
-      ) {
+      if (isDef(task.params['aspect-ratio']) && String(task.params['aspect-ratio']).toLowerCase() != 'false') {
         params.push('-a');
       }
       if (isDef(task.params.background)) {
@@ -663,11 +628,7 @@ function workerForConverting(task, done) {
         if (!code && !callBackAlreadyCalled) {
           done(null, buffer);
         } else {
-          console.warn(
-            'Unexpected close of child process with code %s signal %s',
-            code,
-            signal,
-          );
+          console.warn('Unexpected close of child process with code %s signal %s', code, signal);
         }
       });
 
@@ -769,10 +730,7 @@ function convertSvgToImageDataSync(svg, params) {
     if (isDef(params.height)) {
       convertParams.push('-h', params.height);
     }
-    if (
-      isDef(params['aspect-ratio']) &&
-      String(params['aspect-ratio']).toLowerCase() !== 'false'
-    ) {
+    if (isDef(params['aspect-ratio']) && String(params['aspect-ratio']).toLowerCase() !== 'false') {
       convertParams.push('-a');
     }
     if (isDef(params.background)) {
@@ -858,9 +816,7 @@ AnychartExport.prototype.exportTo = function (target, options, callback) {
 AnychartExport.prototype.exportToSync = function (target, options) {
   const params = getParams(arguments);
   return getSvg(target, params, function (err, svg, params) {
-    return params.outputType === 'svg'
-      ? svg
-      : convertSvgToImageDataSync(svg, params);
+    return params.outputType === 'svg' ? svg : convertSvgToImageDataSync(svg, params);
   });
 };
 
@@ -891,8 +847,7 @@ AnychartExport.prototype.loadFont = function (path, callback) {
 
 AnychartExport.prototype.loadFontSync = function (path) {
   // @ts-ignore
-  return (fonts[font.names.fullName.en.toLowerCase()] =
-    opentype.loadSync(path));
+  return (fonts[font.names.fullName.en.toLowerCase()] = opentype.loadSync(path));
 };
 
 AnychartExport.prototype.anychartify = anychartify;

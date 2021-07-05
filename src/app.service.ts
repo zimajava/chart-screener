@@ -78,10 +78,7 @@ export class AppService {
     const window = jsdom.window;
     const doc = window.document;
 
-    const mainCss = fs.readFileSync(
-      path.resolve(process.cwd(), 'css/anychart-ui.css'),
-      'utf8',
-    );
+    const mainCss = fs.readFileSync(path.resolve(process.cwd(), 'css/anychart-ui.css'), 'utf8');
     const head = doc.getElementsByTagName('head')[0];
     const style = doc.createElement('style');
     style.type = 'text/css';
@@ -102,9 +99,7 @@ export class AppService {
 
     let rawData;
     try {
-      const { data } = await axios.get(
-        `${process.env.QUOTATION_URL}/${pair.ID}/${period}/1000/?withCurrentBar=true`,
-      );
+      const { data } = await axios.get(`${process.env.QUOTATION_URL}/${pair.ID}/${period}/1000/?withCurrentBar=true`);
       rawData = JSON.parse(data);
     } catch (e) {
       console.error(e);

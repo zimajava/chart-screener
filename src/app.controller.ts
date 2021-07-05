@@ -18,12 +18,6 @@ export class AppController {
     @Req() request: Request,
     @Res() response: Response,
   ): Promise<void> {
-    await this.appService.getChart(
-      tid,
-      assetName,
-      timeframe,
-      request,
-      response,
-    );
+    await this.appService.getChart(tid, assetName, timeframe, request, response);
   }
 }

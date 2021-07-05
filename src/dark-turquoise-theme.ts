@@ -26,11 +26,7 @@ export function darkTurquoiseTheme(win) {
     },
     defaultOrdinalColorScale: {
       autoColors: function (d) {
-        return win.anychart.color.blendedHueProgression(
-          '#b2dfdb',
-          '#00838f',
-          d,
-        );
+        return win.anychart.color.blendedHueProgression('#b2dfdb', '#00838f', d);
       },
     },
     defaultLinearColorScale: { colors: ['#b2dfdb', '#00838f'] },

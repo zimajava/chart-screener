@@ -1,8 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import fastifyMulipart from 'fastify-multipart';
 import * as dotenv from 'dotenv';
 
@@ -11,10 +8,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   dotenv.config();
 
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
-    new FastifyAdapter(),
-  );
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
   app.enableShutdownHooks();
   await app.register(fastifyMulipart);
