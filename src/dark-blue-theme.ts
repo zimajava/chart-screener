@@ -28,7 +28,7 @@ export function darkBlueTheme(win) {
     },
     defaultLinearColorScale: { colors: ['#40c4ff', '#0179be'] },
     defaultFontSettings: {
-      fontFamily: '"Lucida Console", Monaco, monospace',
+      fontFamily: 'verdana',
       fontColor: '#b0bec5',
       fontSize: 12,
     },

@@ -12,5 +12,5 @@ services:
       #   - .:/screener
       # command: yarn start:dev
     ports:
-      - 3050:3050
+      - 3060:3050
     restart: unless-stopped

@@ -8,17 +8,19 @@ import { JSDOM } from 'jsdom';
 import * as an from 'anychart';
 import axios from 'axios';
 
-// @ts-ignore
-import { AnychartExportWrapper } from './anychart-node';
-// import { darkTurquoiseTheme } from './dark-turquoise-theme';
+import { AnychartExport } from './AnychartExport';
 import { darkBlueTheme } from './dark-blue-theme';
 
 type Request = FastifyRequest;
 type Response = FastifyReply;
 
-const resolve = (p: string) => path.resolve(process.cwd(), p);
+const TICK_COUNTS = 5;
 
-const getServerPeriod = (value) => {
+function resolve(p: string) {
+  return path.resolve(process.cwd(), p);
+}
+
+function getServerPeriod(value) {
   switch (value) {
     case '1':
       return 'Minute';
@@ -40,20 +42,81 @@ const getServerPeriod = (value) => {
       return 'Week';
     case 'month':
       return 'Month';
-    case 'minute':
-      return 'Minute';
-    case 'minute5':
-      return 'Minute5';
-    case 'minute15':
-      return 'Minute15';
-    case 'minute30':
-      return 'Minute30';
-    case 'hour':
-      return 'Hour';
     default:
       return 'Minute';
   }
-};
+}
+
+function getUIPeriod(value) {
+  switch (value) {
+    case '1':
+      return '1 minute';
+    case '5':
+      return '5 minutes';
+    case '15':
+      return '15 minutes';
+    case '30':
+      return '30 minutes';
+    case '60':
+      return '1 hour';
+    case 'hour4':
+      return '4 hours';
+    case 'hour8':
+      return '8 hours';
+    case 'day':
+      return '1 day';
+    case 'week':
+      return '1 week';
+    case 'month':
+      return '1 month';
+    default:
+      return 'Minute';
+  }
+}
+
+function getTickSetting(unit, numberOfUnitsInCandle, rangeLimit) {
+  const count = (rangeLimit * numberOfUnitsInCandle) / TICK_COUNTS;
+  const setting = { unit, count: Math.round(count) };
+  return [{ minor: setting, major: setting }];
+}
+
+function tickMapping(period, rangeLimit) {
+  switch (period) {
+    case '1': {
+      return getTickSetting('minute', 1, rangeLimit);
+    }
+    case '5': {
+      return getTickSetting('minute', 5, rangeLimit);
+    }
+    case '15': {
+      return getTickSetting('minute', 15, rangeLimit);
+    }
+    case '30': {
+      return getTickSetting('minute', 30, rangeLimit);
+    }
+    case '60': {
+      return getTickSetting('hour', 1, rangeLimit);
+    }
+    case 'hour4': {
+      return getTickSetting('hour', 4, rangeLimit);
+    }
+    case 'hour8': {
+      return getTickSetting('hour', 8, rangeLimit);
+    }
+    case 'day': {
+      return getTickSetting('day', 1, rangeLimit);
+    }
+    case 'week': {
+      return getTickSetting('week', 1, rangeLimit);
+    }
+    case 'month': {
+      return getTickSetting('month', 1, rangeLimit);
+    }
+    default: {
+      return getTickSetting('minute', 1, rangeLimit);
+    }
+  }
+}
 
 @Injectable()
 export class AppService {
@@ -64,120 +127,117 @@ export class AppService {
     request: Request,
     response: Response,
   ): Promise<void> {
-    const start = Date.now();
+    console.time('Completed');
 
-    const settingsJson = fs.readFileSync(resolve('data/settings.json'), {
+    const settingsJson = fs.readFileSync(resolve('data/settings2.json'), {
       encoding: 'utf8',
     });
     const settings = JSON.parse(settingsJson);
 
-    const jsdom = new JSDOM('<body><div id="container"></div></body>', {
-      runScripts: 'dangerously',
-    });
-
-    const window = jsdom.window;
-    const doc = window.document;
-
-    const mainCss = fs.readFileSync(path.resolve(process.cwd(), 'css/anychart-ui.css'), 'utf8');
-    const head = doc.getElementsByTagName('head')[0];
-    const style = doc.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = mainCss;
-    head.appendChild(style);
-
-    // darkTurquoiseTheme(window);
-    const anychart = an(window);
-    darkBlueTheme(window);
-    const anychartExport = AnychartExportWrapper(anychart);
-
     const pair = settings[assetName];
-
     const period = getServerPeriod(timeframe);
 
-    // eslint-disable-next-line prettier/prettier
     console.log('tid =>', tid, '| pair =>', JSON.stringify(pair), '| timeframe =>', period);
 
-    let rawData;
+    let rawData = [];
     try {
-      const { data } = await axios.get(`${process.env.QUOTATION_URL}/${pair.ID}/${period}/1000/?withCurrentBar=true`);
-      rawData = JSON.parse(data);
+      const { data } = await axios.get(`${process.env.QUOTATION_URL}/${pair.ID}/${period}/500/?withCurrentBar=true`);
+      const parsedData = JSON.parse(data);
+
+      rawData = parsedData.map(({ T, O, H, C, L }) => {
+        const time = T * 1000;
+        return [time, O, H, L, C];
+      });
     } catch (e) {
       console.error(e);
     }
 
-    const data = rawData.map(({ T, O, H, C, L }) => {
-      const time = T * 1000;
-      return [time, O, H, L, C];
+    const candlesCount = rawData.length;
+    const rangeLimit = candlesCount <= 80 ? candlesCount : 80;
+
+    const { window } = new JSDOM('<body><div id="container"></div></body>', {
+      runScripts: 'dangerously',
+      url: 'https://localhost',
     });
 
-    // apply coffee theme
-    // anychart.theme(window.anychart.themes.darkTurquoise);
-    // anychart.theme(window.anychart.themes.darkBlue);
+    darkBlueTheme(window);
 
-    // create data table on loaded data
+    const anychart: an = an(window);
+    const anychartExport = AnychartExport.getInstance(anychart, window);
+
+    anychart.theme(window.anychart.themes.darkBlue);
+
     const dataTable = anychart.data.table();
-    dataTable.addData(data);
+    dataTable.addData(rawData);
 
-    const mapping = dataTable.mapAs();
-    mapping.addField('open', 1, 'first');
-    mapping.addField('high', 2, 'max');
-    mapping.addField('low', 3, 'min');
-    mapping.addField('close', 4, 'last');
-    mapping.addField('value', 4, 'last');
+    const mapping = dataTable.mapAs({ open: 1, high: 2, low: 3, close: 4, value: 4 });
 
-    // create stock chart
     const chart = anychart.stock();
     chart.padding(20, 70, 20, 20);
 
-    const grouping = chart.grouping();
-    // Set maximum visible points count.
-    grouping.maxVisiblePoints(80);
-    chart.scrollerGrouping({ maxVisiblePoints: 80 });
+    const scale = chart.xScale();
+    const tickSetting = tickMapping(timeframe, rangeLimit);
+    scale.ticks(tickSetting);
 
-    // const dateTimeScale = anychart.scales.dateTime();
-    // const ticks = dateTimeScale.ticks();
-    // // Set interval for ticks.
-    // ticks.interval('day', 5);
-    // chart.xScale(dateTimeScale);
-
-    // const scale = chart.xScale();
-    // // // Set minimum gap
-    // scale.minimumGap({ intervalsCount: 20, unitType: 'minute', unitCount: 1 });
-    // // // Set maximum gap
+    // Set minimum gap
+    // scale.minimumGap({ intervalsCount: 10, unitType: 'minute', unitCount: 1 });
+    // Set maximum gap
     // scale.maximumGap({ intervalsCount: 15, unitType: 'minute', unitCount: 1 });
-    // // Set ticks.
-    // scale.ticks([{ minor: 'minute', major: 'minute' }]);
 
     // create first plot on the chart
     const plot = chart.plot(0);
-    // set grid settings
-    plot.yGrid(true).xGrid(true);
+    plot.yGrid(true).xGrid(true).yMinorGrid(false).xMinorGrid(true);
+    plot.legend().title().enabled(false);
+
+    const plotXAxis = plot.xAxis();
     plot.yAxis(0).orientation('right');
+    plotXAxis.height(40);
+    plotXAxis.labels().format(function () {
+      return anychart.format.dateTime(this.tickValue, 'MMM/dd \n hh:mm a');
+    });
+    // .background('lightgray');
 
     const indicator = plot.priceIndicator();
-    indicator.value('last-visible');
-    indicator.fallingStroke('#F44336');
-    indicator.fallingLabel({ background: '#F44336' });
-    indicator.risingStroke('#4CAF50');
-    indicator.risingLabel({ background: '#4CAF50' });
+    indicator
+      .value('last-visible')
+      .fallingStroke('#F44336')
+      .fallingLabel({ background: '#F44336' })
+      .risingStroke('#4CAF50')
+      .risingLabel({ background: '#4CAF50' });
 
     const series = plot.candlestick(mapping);
+    series.risingStroke('#4CAF50').risingFill('#4CAF50').fallingStroke('#F44336').fallingFill('#F44336');
+    series.legendItem().iconType('rising-falling');
 
-    series.risingStroke('#4CAF50');
-    series.risingFill('#4CAF50');
-    series.fallingStroke('#F44336');
-    series.fallingFill('#F44336');
+    if (rawData.length) {
+      const rangeLimitIndex = rangeLimit - 1;
+      chart.selectRange(rawData[0][0], rawData[rangeLimitIndex][0]);
+    }
 
-    // chart.selectRange(data[0][0], data[79][0]);
     const scroller = chart.scroller();
-    scroller.line(mapping);
+    // scroller.enabled(false);
+    scroller
+      .selectedFill('green 0.3')
+      .allowRangeChange(false)
+      .area(mapping);
 
-    chart.bounds(0, 0, 1024, 768);
+    // chart.bounds(0, 0, 800, 600);
+    chart.bounds(0, 0, 1280, 1024);
+
+    const pairName = pair.baseCurrency === 'XXX' ? `${pair.name}/${pair.termCurrency}` : pair.name;
+    chart.title(`${pairName} \n Timeframe: ${getUIPeriod(timeframe)}`);
     chart.container('container');
     chart.draw();
-
     try {
-      const picture = await anychartExport.exportTo(chart, 'png');
+      const picture = await anychartExport.exportTo(chart, {
+        outputType: 'png',
+        quality: 100,
+        document: window.document,
+        // resources: [
+        //   'https://cdn.anychart.com/releases/v8/css/anychart-ui.min.css',
+        //   'https://cdn.anychart.com/releases/v8/fonts/css/anychart-font.min.css',
+        // ],
+      });
       response.status(200);
       response.headers({ 'Content-type': 'image/png' });
       response.send(picture);
@@ -186,6 +246,6 @@ export class AppService {
       response.status(500);
       response.send(`Screenshot not available`);
     }
-    console.log(`Completed (${Date.now() - start} ms)`);
+    console.timeEnd('Completed');
   }
 }

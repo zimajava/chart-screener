@@ -1,7 +1,7 @@
 FROM node:14.16.0-alpine
 
 WORKDIR /screener
-RUN apk update && apk --no-cache add yarn imagemagick-dev imagemagick librsvg-dev libmount ttf-dejavu fontconfig
+RUN apk update && apk --no-cache add yarn imagemagick-dev imagemagick librsvg-dev libmount ttf-opensans fontconfig
 
 COPY . .
 
