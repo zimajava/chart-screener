@@ -2,70 +2,64 @@ import { Injectable } from '@nestjs/common';
 import * as WebSocket from 'ws';
 import axios from 'axios';
 
+function getConnectionSettings(): Promise<string> {
+  const url = `${process.env.WSS_URL}?command=getConnectingStr`;
+
+  return axios
+    .get(url)
+    .then((res) => {
+      if (res.status !== 200) {
+        const error = new Error(res.statusText);
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        error.res = res;
+        throw error;
+      }
+
+      return res.data;
+    })
+    .catch((e) => {
+      console.warn(e);
+    });
+}
+
 @Injectable()
 export class WSService {
-  // wss://echo.websocket.org is a test websocket server
   private ws: WebSocket;
 
   constructor() {
-    this.getConnectionSettings().then((serverName) => {
-      const wsUrl = `wss://${serverName}.investforum.ru/wss/Server.ashx?subscriber=true`;
-
-      this.ws = new WebSocket(wsUrl);
-
-      this.ws.on('open', () => {
-        console.log('SOCKET OPENED');
-      });
-
-      this.ws.on('error', (e) => {
-        console.log('SOCKET ERROR', e);
-      });
-      this.ws.on('close', () => {
-        console.log('SOCKET CLOSED');
-      });
-      this.ws.on('message', function (data) {
-        if (typeof data === 'string') {
-          let message;
-          try {
-            message = JSON.parse(data);
-          } catch (e) {
-            console.error('Error parse MESSAGE', e);
-          }
-
-          // const args = Array.isArray(message.args) ? message.args[0] : 'message.args[0] NOT ARR';
-
-          // console.log(message.module, message.cmd);
-        }
-      });
+    getConnectionSettings().then((serverName) => {
+      this.init(serverName);
     });
   }
 
-  getConnectionSettings = (): Promise<string> => {
-    const url = 'https://informer.investforum.ru/wss/Server.ashx?command=getConnectingStr';
+  init(serverName) {
+    const wsUrl = `${process.env.WSS_URL.replace('informer', serverName)}?subscriber=true`;
 
-    return axios
-      .get(url)
-      .then((res) => {
-        if (res.status !== 200) {
-          const error = new Error(res.statusText);
-          // @ts-ignore
-          error.res = res;
-          throw error;
-        }
+    this.ws = new WebSocket(wsUrl);
 
-        return res.data;
-      })
-      .catch((e) => {
-        console.warn(e);
+    this.ws.on('open', () => {
+      console.log('SOCKET OPENED');
+    });
+
+    this.ws.on('error', (e) => {
+      console.log('SOCKET ERROR', e);
+    });
+
+    this.ws.on('close', () => {
+      console.log('SOCKET CLOSED');
+      getConnectionSettings().then((serverName) => {
+        console.log('RETRY OPEN');
+        this.init(serverName);
       });
-  };
+    });
+  }
 
   send(data: any) {
     this.ws.send(data);
   }
 
-  onMessage(handler: (data) => void) {
-    this.ws.on('message', handler);
-    // this.ws.off('message', handler);
+  onMessage(handler: (ws: WebSocket) => void) {
+    handler(this.ws);
   }
 }
