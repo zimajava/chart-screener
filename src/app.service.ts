@@ -16,37 +16,6 @@ type Response = FastifyReply;
 
 const TICK_COUNTS = 5;
 
-function resolve(p: string) {
-  return path.resolve(process.cwd(), p);
-}
-
-function getServerPeriod(value) {
-  switch (value) {
-    case '1':
-      return 'Minute';
-    case '5':
-      return 'Minute5';
-    case '15':
-      return 'Minute15';
-    case '30':
-      return 'Minute30';
-    case '60':
-      return 'Hour';
-    case 'hour4':
-      return 'Hour4';
-    case 'hour8':
-      return 'Hour8';
-    case 'day':
-      return 'Day';
-    case 'week':
-      return 'Week';
-    case 'month':
-      return 'Month';
-    default:
-      return 'Minute';
-  }
-}
-
 function getUIPeriod(value) {
   switch (value) {
     case '1':
@@ -121,27 +90,17 @@ function tickMapping(period, rangeLimit) {
 @Injectable()
 export class AppService {
   async getChart(
-    tid: string,
-    assetName: string,
+    pair: Record<string, any>,
+    period: string,
     timeframe: string,
     request: Request,
     response: Response,
   ): Promise<void> {
     console.time('Completed');
 
-    const settingsJson = fs.readFileSync(resolve('data/settings2.json'), {
-      encoding: 'utf8',
-    });
-    const settings = JSON.parse(settingsJson);
-
-    const pair = settings[assetName];
-    const period = getServerPeriod(timeframe);
-
-    console.log('tid =>', tid, '| pair =>', JSON.stringify(pair), '| timeframe =>', period);
-
     let rawData = [];
     try {
-      const { data } = await axios.get(`${process.env.QUOTATION_URL}/${pair.ID}/${period}/500/?withCurrentBar=true`);
+      const { data } = await axios.get(`${process.env.QUOTATION_URL}/${pair.ID}/${period}/300/?withCurrentBar=true`);
       const parsedData = JSON.parse(data);
 
       rawData = parsedData.map(({ T, O, H, C, L }) => {
@@ -173,7 +132,9 @@ export class AppService {
     const mapping = dataTable.mapAs({ open: 1, high: 2, low: 3, close: 4, value: 4 });
 
     const chart = anychart.stock();
-    chart.padding(20, 70, 20, 20);
+    chart.padding(20, 80, 20, 20);
+
+    chart.crosshair().displayMode('sticky').enabled();
 
     const scale = chart.xScale();
     const tickSetting = tickMapping(timeframe, rangeLimit);
@@ -189,13 +150,20 @@ export class AppService {
     plot.yGrid(true).xGrid(true).yMinorGrid(false).xMinorGrid(true);
     plot.legend().title().enabled(false);
 
+    const plotYAxis = plot.yAxis(0);
+    plotYAxis.labels().fontSize(14);
+    plotYAxis.orientation('right');
+
     const plotXAxis = plot.xAxis();
-    plot.yAxis(0).orientation('right');
-    plotXAxis.height(40);
-    plotXAxis.labels().format(function () {
-      return anychart.format.dateTime(this.tickValue, 'MMM/dd \n hh:mm a');
-    });
-    // .background('lightgray');
+    plotXAxis.height(50);
+    plotXAxis
+      .labels()
+      .hAlign('center')
+      .fontSize(14)
+      .format(function () {
+        return anychart.format.dateTime(this.tickValue, 'hh:mm a \n MMM/dd');
+      });
+    // .background('#78909c');
 
     const indicator = plot.priceIndicator();
     indicator
@@ -203,11 +171,15 @@ export class AppService {
       .fallingStroke('#F44336')
       .fallingLabel({ background: '#F44336' })
       .risingStroke('#4CAF50')
-      .risingLabel({ background: '#4CAF50' });
+      .risingLabel({ background: '#4CAF50' })
+      .label()
+      .fontSize(14)
+      .fontColor('white');
 
     const series = plot.candlestick(mapping);
     series.risingStroke('#4CAF50').risingFill('#4CAF50').fallingStroke('#F44336').fallingFill('#F44336');
-    series.legendItem().iconType('rising-falling');
+    series.legendItem().fontSize(14).iconType('rising-falling');
+    // series.right(100);
 
     if (rawData.length) {
       const rangeLimitIndex = rangeLimit - 1;
@@ -216,27 +188,21 @@ export class AppService {
 
     const scroller = chart.scroller();
     // scroller.enabled(false);
-    scroller
-      .selectedFill('green 0.3')
-      .allowRangeChange(false)
-      .area(mapping);
+    scroller.selectedFill('green 0.3').allowRangeChange(false).area(mapping);
 
-    // chart.bounds(0, 0, 800, 600);
-    chart.bounds(0, 0, 1280, 1024);
+    chart.bounds(0, 0, 800, 600);
+    // chart.bounds(0, 0, 1280, 1024);
 
     const pairName = pair.baseCurrency === 'XXX' ? `${pair.name}/${pair.termCurrency}` : pair.name;
     chart.title(`${pairName} \n Timeframe: ${getUIPeriod(timeframe)}`);
     chart.container('container');
     chart.draw();
+
     try {
       const picture = await anychartExport.exportTo(chart, {
         outputType: 'png',
         quality: 100,
         document: window.document,
-        // resources: [
-        //   'https://cdn.anychart.com/releases/v8/css/anychart-ui.min.css',
-        //   'https://cdn.anychart.com/releases/v8/fonts/css/anychart-font.min.css',
-        // ],
       });
       response.status(200);
       response.headers({ 'Content-type': 'image/png' });
