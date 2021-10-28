@@ -4,10 +4,10 @@ import { JSDOM } from 'jsdom';
 // @ts-ignore
 import * as an from 'anychart';
 
-import { AnychartExport } from './AnychartExport';
-import { darkBlueTheme } from './dark-blue-theme';
-import { WSService } from './socket-client';
-import { tickMapping, getUIPeriod } from './utils';
+import { AnychartExport } from './chart/AnychartExport';
+import { darkBlueTheme } from './chart/dark-blue-theme';
+import { WSService } from './services/socket-service/socket-client';
+import { tickMapping, getUIPeriod } from './utils/utils';
 import { Request, Response, InstrumentSetting } from './types';
 
 @Injectable()

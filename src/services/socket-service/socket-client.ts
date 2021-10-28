@@ -1,12 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConsoleLogger } from '@nestjs/common';
 import * as WebSocket from 'ws';
 import axios from 'axios';
 
-function getConnectionSettings(): Promise<string> {
+const logger = new ConsoleLogger();
+
+function getConnectionSettings(): Promise<string | void> {
   const url = `${process.env.WSS_URL}?command=getConnectingStr`;
 
   return axios
-    .get(url)
+    .get<string>(url)
     .then((res) => {
       if (res.status !== 200) {
         const error = new Error(res.statusText);
@@ -19,7 +21,7 @@ function getConnectionSettings(): Promise<string> {
       return res.data;
     })
     .catch((e) => {
-      console.warn(e);
+      logger.error(e);
     });
 }
 
@@ -39,17 +41,17 @@ export class WSService {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.on('open', () => {
-      console.log('SOCKET OPENED');
+      logger.log('SOCKET OPENED');
     });
 
     this.ws.on('error', (e) => {
-      console.log('SOCKET ERROR', e);
+      logger.log('SOCKET ERROR', e);
     });
 
     this.ws.on('close', () => {
-      console.log('SOCKET CLOSED');
+      logger.log('SOCKET CLOSED');
       getConnectionSettings().then((serverName) => {
-        console.log('RETRY OPEN');
+        logger.log('RETRY OPEN');
         this.init(serverName);
       });
     });
